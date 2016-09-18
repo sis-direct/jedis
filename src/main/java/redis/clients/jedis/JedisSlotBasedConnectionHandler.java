@@ -5,8 +5,8 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 import java.util.Set;
 
-import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.jedis.exceptions.JedisNoReachableClusterNodeException;
 
 public class JedisSlotBasedConnectionHandler extends JedisClusterConnectionHandler {
 
@@ -17,7 +17,11 @@ public class JedisSlotBasedConnectionHandler extends JedisClusterConnectionHandl
 
   public JedisSlotBasedConnectionHandler(Set<HostAndPort> nodes,
       final GenericObjectPoolConfig poolConfig, int connectionTimeout, int soTimeout) {
-    super(nodes, poolConfig, connectionTimeout, soTimeout);
+    super(nodes, poolConfig, connectionTimeout, soTimeout, null);
+  }
+
+  public JedisSlotBasedConnectionHandler(Set<HostAndPort> nodes, GenericObjectPoolConfig poolConfig, int connectionTimeout, int soTimeout, String password) {
+    super(nodes, poolConfig, connectionTimeout, soTimeout, password);
   }
 
   @Override
@@ -27,7 +31,7 @@ public class JedisSlotBasedConnectionHandler extends JedisClusterConnectionHandl
     // ping-pong)
     // or exception if all connections are invalid
 
-    List<JedisPool> pools = getShuffledNodesPool();
+    List<JedisPool> pools = cache.getShuffledNodesPool();
 
     for (JedisPool pool : pools) {
       Jedis jedis = null;
@@ -50,7 +54,7 @@ public class JedisSlotBasedConnectionHandler extends JedisClusterConnectionHandl
       }
     }
 
-    throw new JedisConnectionException("no reachable node in cluster");
+    throw new JedisNoReachableClusterNodeException("No reachable node in cluster");
   }
 
   @Override
@@ -61,7 +65,14 @@ public class JedisSlotBasedConnectionHandler extends JedisClusterConnectionHandl
       // assignment
       return connectionPool.getResource();
     } else {
-      return getConnection();
+      renewSlotCache(); //It's abnormal situation for cluster mode, that we have just nothing for slot, try to rediscover state
+      connectionPool = cache.getSlotPool(slot);
+      if (connectionPool != null) {
+        return connectionPool.getResource();
+      } else {
+        //no choice, fallback to new connection to random node
+        return getConnection();
+      }
     }
   }
 }

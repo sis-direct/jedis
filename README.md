@@ -48,7 +48,7 @@ Or use it as a maven dependency:
 <dependency>
     <groupId>redis.clients</groupId>
     <artifactId>jedis</artifactId>
-    <version>2.8.0</version>
+    <version>2.8.1</version>
     <type>jar</type>
     <scope>compile</scope>
 </dependency>
@@ -65,6 +65,8 @@ String value = jedis.get("foo");
 For more usage examples check the tests.
 
 Please check the [wiki](http://github.com/xetorthio/jedis/wiki "wiki"). There are lots of cool things you should know, including information about connection pooling.
+
+Master branch javadocs can be found here: http://xetorthio.github.io/jedis/
 
 And you are done!
 

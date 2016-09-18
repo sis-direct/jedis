@@ -1,6 +1,5 @@
 package redis.clients.jedis;
 
-import static redis.clients.jedis.Protocol.Command.GEORADIUS;
 import static redis.clients.jedis.Protocol.toByteArray;
 
 import java.util.ArrayList;
@@ -1174,6 +1173,16 @@ public class Client extends BinaryClient implements Commands {
     return p;
   }
 
+  public void moduleLoad(String path) {
+    moduleLoad(SafeEncoder.encode(path));
+  }
+  public void moduleLoad() {
+    moduleList();
+  }
+
+  public void moduleUnload(String name) {
+    moduleUnload(SafeEncoder.encode(name));
+  }
   private HashMap<byte[], Double> convertScoreMembersToBinary(Map<String, Double> scoreMembers) {
     HashMap<byte[], Double> binaryScoreMembers = new HashMap<byte[], Double>();
 
@@ -1191,6 +1200,16 @@ public class Client extends BinaryClient implements Commands {
       binaryMemberCoordinateMap.put(SafeEncoder.encode(entry.getKey()), entry.getValue());
     }
     return binaryMemberCoordinateMap;
+  }
+
+  @Override
+  public void bitfield(final String key, final String... arguments) {
+    byte[][] argumentArray = new byte[arguments.length][];
+    int index = 0;
+    for(String argument : arguments) {
+      argumentArray[index++] = SafeEncoder.encode(argument);
+    }
+    bitfield(SafeEncoder.encode(key), argumentArray);
   }
 
 }

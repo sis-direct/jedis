@@ -1,6 +1,7 @@
 package redis.clients.jedis;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -72,7 +73,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public List<String> build(Object data) {
       if (null == data) {
-        return null;
+        return Collections.emptyList();
       }
       List<byte[]> l = (List<byte[]>) data;
       final ArrayList<String> result = new ArrayList<String>(l.size());
@@ -96,7 +97,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public Map<String, String> build(Object data) {
       final List<byte[]> flatHash = (List<byte[]>) data;
-      final Map<String, String> hash = new HashMap<String, String>();
+      final Map<String, String> hash = new HashMap<String, String>(flatHash.size()/2, 1);
       final Iterator<byte[]> iterator = flatHash.iterator();
       while (iterator.hasNext()) {
         hash.put(SafeEncoder.encode(iterator.next()), SafeEncoder.encode(iterator.next()));
@@ -116,7 +117,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public Map<String, String> build(Object data) {
       final List<Object> flatHash = (List<Object>) data;
-      final Map<String, String> hash = new HashMap<String, String>();
+      final Map<String, String> hash = new HashMap<String, String>(flatHash.size()/2, 1);
       final Iterator<Object> iterator = flatHash.iterator();
       while (iterator.hasNext()) {
         hash.put(SafeEncoder.encode((byte[]) iterator.next()),
@@ -137,7 +138,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public Set<String> build(Object data) {
       if (null == data) {
-        return null;
+        return Collections.emptySet();
       }
       List<byte[]> l = (List<byte[]>) data;
       final Set<String> result = new HashSet<String>(l.size());
@@ -162,7 +163,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public List<byte[]> build(Object data) {
       if (null == data) {
-        return null;
+        return Collections.emptyList();
       }
       List<byte[]> l = (List<byte[]>) data;
 
@@ -179,7 +180,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public Set<byte[]> build(Object data) {
       if (null == data) {
-        return null;
+        return Collections.emptySet();
       }
       List<byte[]> l = (List<byte[]>) data;
       final Set<byte[]> result = new LinkedHashSet<byte[]>(l);
@@ -222,7 +223,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public Set<String> build(Object data) {
       if (null == data) {
-        return null;
+        return Collections.emptySet();
       }
       List<byte[]> l = (List<byte[]>) data;
       final Set<String> result = new LinkedHashSet<String>(l.size());
@@ -247,7 +248,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public Set<Tuple> build(Object data) {
       if (null == data) {
-        return null;
+        return Collections.emptySet();
       }
       List<byte[]> l = (List<byte[]>) data;
       final Set<Tuple> result = new LinkedHashSet<Tuple>(l.size());
@@ -270,7 +271,7 @@ public final class BuilderFactory {
     @SuppressWarnings("unchecked")
     public Set<Tuple> build(Object data) {
       if (null == data) {
-        return null;
+        return Collections.emptySet();
       }
       List<byte[]> l = (List<byte[]>) data;
       final Set<Tuple> result = new LinkedHashSet<Tuple>(l.size());
@@ -348,7 +349,7 @@ public final class BuilderFactory {
     @Override
     public List<GeoCoordinate> build(Object data) {
       if (null == data) {
-        return null;
+        return Collections.emptyList();
       }
       return interpretGeoposResult((List<Object>) data);
     }
@@ -378,7 +379,7 @@ public final class BuilderFactory {
     @Override
     public List<GeoRadiusResponse> build(Object data) {
       if (data == null) {
-        return null;
+        return Collections.emptyList();
       } else {
         List<Object> objectList = (List<Object>) data;
 
@@ -431,6 +432,54 @@ public final class BuilderFactory {
       return "GeoRadiusWithParamsResult";
     }
   };
+
+
+
+  public static final Builder<List<Module>> MODULE_LIST = new Builder<List<Module>>() {
+    @Override
+    public List<Module> build(Object data) {
+      if (data == null) {
+        return Collections.emptyList();
+      } else {
+        List<List<Object>> objectList = (List<List<Object>>) data;
+
+        if (objectList.isEmpty()) {
+          return new ArrayList<Module>();
+        }
+
+        List<Module> responses = new ArrayList<Module>(objectList.size());
+
+        for (List<Object> moduleResp: objectList) {
+          Module m = new Module(SafeEncoder.encode((byte[]) moduleResp.get(1)), ((Long) moduleResp.get(3)).intValue());
+          responses.add(m);
+        }
+
+        return responses;
+      }
+    }
+
+    public String toString() {
+      return "List<Module>";
+    }
+
+  };
+
+  public static final Builder<List<Long>> LONG_LIST = new Builder<List<Long>>() {
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<Long> build(Object data) {
+      if (null == data) {
+        return null;
+      }
+      return (List<Long>) data;
+    }
+
+    public String toString() {
+      return "List<Long>";
+    }
+
+  };
+
 
   private BuilderFactory() {
     throw new InstantiationError( "Must not instantiate this class" );

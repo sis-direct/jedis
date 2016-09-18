@@ -1,5 +1,12 @@
 package redis.clients.jedis.tests.commands;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -256,7 +263,6 @@ public class TransactionCommandsTest extends JedisCommandTestBase {
     jedis2.set("foo", "bar2");
 
     List<Object> results = t.exec();
-
     assertNull(results);
   }
 

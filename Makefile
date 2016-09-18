@@ -3,6 +3,7 @@ STUNNEL_BIN := $(shell which stunnel)
 
 define REDIS1_CONF
 daemonize yes
+protected-mode no
 port 6379
 requirepass foobared
 pidfile /tmp/redis1.pid
@@ -14,6 +15,7 @@ endef
 
 define REDIS2_CONF
 daemonize yes
+protected-mode no
 port 6380
 requirepass foobared
 pidfile /tmp/redis2.pid
@@ -24,6 +26,7 @@ endef
 
 define REDIS3_CONF
 daemonize yes
+protected-mode no
 port 6381
 requirepass foobared
 masterauth foobared
@@ -35,6 +38,7 @@ endef
 
 define REDIS4_CONF
 daemonize yes
+protected-mode no
 port 6382
 requirepass foobared
 masterauth foobared
@@ -47,6 +51,7 @@ endef
 
 define REDIS5_CONF
 daemonize yes
+protected-mode no
 port 6383
 requirepass foobared
 masterauth foobared
@@ -59,6 +64,7 @@ endef
 
 define REDIS6_CONF
 daemonize yes
+protected-mode no
 port 6384
 requirepass foobared
 masterauth foobared
@@ -70,6 +76,7 @@ endef
 
 define REDIS7_CONF
 daemonize yes
+protected-mode no
 port 6385
 requirepass foobared
 masterauth foobared
@@ -84,6 +91,7 @@ endef
 define REDIS_SENTINEL1
 port 26379
 daemonize yes
+protected-mode no
 sentinel monitor mymaster 127.0.0.1 6379 1
 sentinel auth-pass mymaster foobared
 sentinel down-after-milliseconds mymaster 2000
@@ -96,6 +104,7 @@ endef
 define REDIS_SENTINEL2
 port 26380
 daemonize yes
+protected-mode no
 sentinel monitor mymaster 127.0.0.1 6381 1
 sentinel auth-pass mymaster foobared
 sentinel down-after-milliseconds mymaster 2000
@@ -108,6 +117,7 @@ endef
 define REDIS_SENTINEL3
 port 26381
 daemonize yes
+protected-mode no
 sentinel monitor mymasterfailover 127.0.0.1 6384 1
 sentinel auth-pass mymasterfailover foobared
 sentinel down-after-milliseconds mymasterfailover 2000
@@ -120,6 +130,7 @@ endef
 define REDIS_SENTINEL4
 port 26382
 daemonize yes
+protected-mode no
 sentinel monitor mymaster 127.0.0.1 6381 1
 sentinel auth-pass mymaster foobared
 sentinel down-after-milliseconds mymaster 2000
@@ -132,6 +143,8 @@ endef
 # CLUSTER REDIS NODES
 define REDIS_CLUSTER_NODE1_CONF
 daemonize yes
+protected-mode no
+requirepass cluster
 port 7379
 cluster-node-timeout 50
 pidfile /tmp/redis_cluster_node1.pid
@@ -144,6 +157,8 @@ endef
 
 define REDIS_CLUSTER_NODE2_CONF
 daemonize yes
+protected-mode no
+requirepass cluster
 port 7380
 cluster-node-timeout 50
 pidfile /tmp/redis_cluster_node2.pid
@@ -156,6 +171,8 @@ endef
 
 define REDIS_CLUSTER_NODE3_CONF
 daemonize yes
+protected-mode no
+requirepass cluster
 port 7381
 cluster-node-timeout 50
 pidfile /tmp/redis_cluster_node3.pid
@@ -168,6 +185,8 @@ endef
 
 define REDIS_CLUSTER_NODE4_CONF
 daemonize yes
+protected-mode no
+requirepass cluster
 port 7382
 cluster-node-timeout 50
 pidfile /tmp/redis_cluster_node4.pid
@@ -180,6 +199,8 @@ endef
 
 define REDIS_CLUSTER_NODE5_CONF
 daemonize yes
+protected-mode no
+requirepass cluster
 port 7383
 cluster-node-timeout 5000
 pidfile /tmp/redis_cluster_node5.pid
@@ -188,18 +209,6 @@ save ""
 appendonly no
 cluster-enabled yes
 cluster-config-file /tmp/redis_cluster_node5.conf
-endef
-
-define REDIS_CLUSTER_NODE6_CONF
-daemonize yes
-port 7384
-cluster-node-timeout 5000
-pidfile /tmp/redis_cluster_node6.pid
-logfile /tmp/redis_cluster_node6.log
-save ""
-appendonly no
-cluster-enabled yes
-cluster-config-file /tmp/redis_cluster_node6.conf
 endef
 
 #STUNNEL
@@ -227,7 +236,6 @@ export REDIS_CLUSTER_NODE2_CONF
 export REDIS_CLUSTER_NODE3_CONF
 export REDIS_CLUSTER_NODE4_CONF
 export REDIS_CLUSTER_NODE5_CONF
-export REDIS_CLUSTER_NODE6_CONF
 export STUNNEL_CONF
 export STUNNEL_BIN
 
@@ -257,7 +265,6 @@ start: stunnel cleanup
 	echo "$$REDIS_CLUSTER_NODE3_CONF" | redis-server -
 	echo "$$REDIS_CLUSTER_NODE4_CONF" | redis-server -
 	echo "$$REDIS_CLUSTER_NODE5_CONF" | redis-server -
-	echo "$$REDIS_CLUSTER_NODE6_CONF" | redis-server -
 
 cleanup:
 	- rm -vf /tmp/redis_cluster_node*.conf 2>/dev/null
@@ -284,7 +291,6 @@ stop:
 	kill `cat /tmp/redis_cluster_node3.pid` || true
 	kill `cat /tmp/redis_cluster_node4.pid` || true
 	kill `cat /tmp/redis_cluster_node5.pid` || true
-	kill `cat /tmp/redis_cluster_node6.pid` || true
 	kill `cat /tmp/stunnel.pid` || true
 	rm -f /tmp/sentinel1.conf
 	rm -f /tmp/sentinel2.conf
@@ -294,21 +300,17 @@ stop:
 	rm -f /tmp/redis_cluster_node3.conf
 	rm -f /tmp/redis_cluster_node4.conf
 	rm -f /tmp/redis_cluster_node5.conf
-	rm -f /tmp/redis_cluster_node6.conf
 
-test:
-	make start
+test: compile-module start
 	sleep 2
 	mvn -Dtest=${SKIP_SSL}${TEST} clean compile test
 	make stop
 
-package:
-	make start
+package: start
 	mvn clean package
 	make stop
 
-deploy:
-	make start
+deploy: start
 	mvn clean deploy
 	make stop
 
@@ -323,7 +325,12 @@ release:
 	make stop
 
 travis-install:
-	[ ! -e redis-git ] && git clone https://github.com/antirez/redis.git redis-git || true
-	make -C redis-git -j4
+	[ ! -e redis-git ] && git clone https://github.com/antirez/redis.git --branch unstable --single-branch redis-git || true
+	$(MAKE) -C redis-git clean
+	$(MAKE) -C redis-git -j4
+
+compile-module:
+	gcc -shared -o /tmp/testmodule.so -fPIC src/test/resources/testmodule.c
+
 
 .PHONY: test

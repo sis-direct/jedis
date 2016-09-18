@@ -3482,10 +3482,12 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
     return new ScanResult<byte[]>(newcursor, rawResults);
   }
 
+  @Override
   public ScanResult<Map.Entry<byte[], byte[]>> hscan(final byte[] key, final byte[] cursor) {
     return hscan(key, cursor, new ScanParams());
   }
 
+  @Override
   public ScanResult<Map.Entry<byte[], byte[]>> hscan(final byte[] key, final byte[] cursor,
       final ScanParams params) {
     checkIsInMultiOrPipeline();
@@ -3501,10 +3503,12 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
     return new ScanResult<Map.Entry<byte[], byte[]>>(newcursor, results);
   }
 
+  @Override
   public ScanResult<byte[]> sscan(final byte[] key, final byte[] cursor) {
     return sscan(key, cursor, new ScanParams());
   }
 
+  @Override
   public ScanResult<byte[]> sscan(final byte[] key, final byte[] cursor, final ScanParams params) {
     checkIsInMultiOrPipeline();
     client.sscan(key, cursor, params);
@@ -3514,10 +3518,12 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
     return new ScanResult<byte[]>(newcursor, rawResults);
   }
 
+  @Override
   public ScanResult<Tuple> zscan(final byte[] key, final byte[] cursor) {
     return zscan(key, cursor, new ScanParams());
   }
 
+  @Override
   public ScanResult<Tuple> zscan(final byte[] key, final byte[] cursor, final ScanParams params) {
     checkIsInMultiOrPipeline();
     client.zscan(key, cursor, params);
@@ -3617,7 +3623,7 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
    */
   protected static class SetFromList<E> extends AbstractSet<E> implements Serializable {
     private static final long serialVersionUID = -2850347066962734052L;
-    private final List<E> list;
+    private final transient List<E> list;
 
     private SetFromList(List<E> list) {
       if (list == null) {
@@ -3671,14 +3677,17 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
       return list.toArray(a);
     }
 
+    @Override
     public String toString() {
       return list.toString();
     }
 
+    @Override
     public int hashCode() {
       return list.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
       if (o == this) {
         return true;
@@ -3714,5 +3723,12 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands, MultiKey
     protected static <E> SetFromList<E> of(List<E> list) {
       return new SetFromList<E>(list);
     }
+  }
+
+  @Override
+  public List<byte[]> bitfield(byte[] key, byte[]... arguments) {
+    checkIsInMultiOrPipeline();
+    client.bitfield(key, arguments);
+    return client.getBinaryMultiBulkReply();
   }
 }

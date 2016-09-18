@@ -1,5 +1,11 @@
 package redis.clients.jedis.tests;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import static redis.clients.jedis.tests.utils.AssertUtil.assertByteArrayListEquals;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,11 +19,12 @@ import java.util.List;
 import org.junit.Test;
 
 import redis.clients.jedis.Protocol;
+import redis.clients.jedis.exceptions.JedisBusyException;
 import redis.clients.util.RedisInputStream;
 import redis.clients.util.RedisOutputStream;
 import redis.clients.util.SafeEncoder;
 
-public class ProtocolTest extends JedisTestBase {
+public class ProtocolTest {
   @Test
   public void buildACommand() throws IOException {
     PipedInputStream pis = new PipedInputStream();
@@ -108,8 +115,7 @@ public class ProtocolTest extends JedisTestBase {
     expected.add(SafeEncoder.encode("bar"));
     expected.add(SafeEncoder.encode("Hello"));
     expected.add(SafeEncoder.encode("World"));
-
-    assertEquals(expected, response);
+    assertByteArrayListEquals(expected, response);
   }
 
   @SuppressWarnings("unchecked")
@@ -118,5 +124,18 @@ public class ProtocolTest extends JedisTestBase {
     InputStream is = new ByteArrayInputStream("*-1\r\n".getBytes());
     List<String> response = (List<String>) Protocol.read(new RedisInputStream(is));
     assertNull(response);
+  }
+
+  @Test
+  public void busyReply() {
+    final String busyMessage = "BUSY Redis is busy running a script.";
+    final InputStream is = new ByteArrayInputStream(('-' + busyMessage + "\r\n").getBytes());
+    try {
+      Protocol.read(new RedisInputStream(is));
+    } catch (final JedisBusyException e) {
+      assertEquals(busyMessage, e.getMessage());
+      return;
+    }
+    fail("Expected a JedisBusyException to be thrown.");
   }
 }

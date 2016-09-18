@@ -1,6 +1,11 @@
 package redis.clients.jedis.tests.commands;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +18,7 @@ import redis.clients.jedis.BinaryJedis;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.exceptions.JedisNoScriptException;
 import redis.clients.jedis.tests.utils.ClientKillerUtil;
 import redis.clients.util.SafeEncoder;
 
@@ -122,7 +128,7 @@ public class ScriptingCommandsTest extends JedisCommandTestBase {
     assertEquals("bar", result);
   }
 
-  @Test(expected = JedisDataException.class)
+  @Test(expected = JedisNoScriptException.class)
   public void evalshaShaNotFound() {
     jedis.evalsha("ffffffffffffffffffffffffffffffffffffffff");
   }
